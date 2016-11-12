@@ -4,9 +4,9 @@
 --
 --===========================================================================--
 
-SWEP.printname				= "MP5"
-SWEP.viewmodel				= "models/weapons/smg2/v_5mg2.mdl"
-SWEP.playermodel			= "models/weapons/smg2/w_smg2.mdl"
+SWEP.printname				= "SMG"
+SWEP.viewmodel				= "models/weapons/v_5mg2.mdl"
+SWEP.playermodel			= "models/weapons/w_smg3.mdl"
 SWEP.anim_prefix			= "smg"
 SWEP.bucket					= 2
 SWEP.bucket_position		= 1
@@ -25,12 +25,12 @@ SWEP.damage					= 20
 
 SWEP.SoundData				=
 {
-	empty					= "Weapon_Pistol.Empty",
+	empty					= "weapons/1alyxgun/alyxgun_empty.wav",
 	single_shot				= "weapons/1smg2/npc_smg2_fire1.wav",
 	burst					= "weapons/1smg2/44k/smg2_fireburst1.wav",
 	reload					= "weapons/smg1/smg1_reload.wav",
-	special1				= "weapons/1smg2/switch_burst.wav", -- 11
-	special2				= "weapons/1smg2/switch_single.wav" -- 12
+	special1				= "weapons/1smg2/switch_burst.wav",
+	special2				= "weapons/1smg2/switch_single.wav"
 }
 
 SWEP.showusagehint			= 0

@@ -21,7 +21,7 @@ SWEP.secondary_ammo			= "None"
 SWEP.weight					= 7
 SWEP.item_flags				= 0
 
-SWEP.damage					= 75
+SWEP.damage					= 25
 
 SWEP.SoundData				=
 {
@@ -58,7 +58,7 @@ SWEP.m_acttable				=
 
 function SWEP:Initialize()
 	self.m_bReloadsSingly	= false;
-	self.m_bFiresUnderwater	= false;
+	self.m_bFiresUnderwater	= true;
 end
 
 function SWEP:Precache()
@@ -72,19 +72,7 @@ function SWEP:PrimaryAttack()
 		return;
 	end
 
-	if ( self.m_iClip1 <= 0 ) then
-		if ( not self.m_bFireOnEmpty ) then
-			self:Reload();
-		else
-			self:WeaponSound( 0 );
-			self.m_flNextPrimaryAttack = 0.15;
-		end
-
-		return;
-	end
-
 	self:WeaponSound( 1 );
-	pPlayer:DoMuzzleFlash();
 
 	self:SendWeaponAnim( 180 );
 	pPlayer:SetAnimation( 5 );
@@ -93,12 +81,10 @@ function SWEP:PrimaryAttack()
 	self.m_flNextPrimaryAttack = gpGlobals.curtime() + 0.75;
 	self.m_flNextSecondaryAttack = gpGlobals.curtime() + 0.75;
 
-	self.m_iClip1 = self.m_iClip1 - 1;
-
 	local vecSrc		= pPlayer:Weapon_ShootPosition();
 	local vecAiming		= pPlayer:GetAutoaimVector( 0.08715574274766 );
 
-	local info = { m_iShots = 1, m_vecSrc = vecSrc, m_vecDirShooting = vecAiming, m_vecSpread = vec3_origin, m_flDistance = MAX_TRACE_LENGTH, m_iAmmoType = self.m_iPrimaryAmmoType };
+	local info = { m_iShots = 1, m_vecSrc = vecSrc, m_vecDirShooting = vecAiming, m_vecSpread = vec3_origin, m_flDistance = 64, m_iAmmoType = self.m_iPrimaryAmmoType };
 	info.m_pAttacker = pPlayer;
 
 	-- Fire the bullets, and force the first shot to be perfectly accuracy
@@ -115,24 +101,13 @@ if not _CLIENT then
 	pPlayer:SnapEyeAngles( angles );
 end
 
-	pPlayer:ViewPunch( QAngle( -8, random.RandomFloat( -2, 2 ), 0 ) );
-
-	if ( self.m_iClip1 == 0 and pPlayer:GetAmmoCount( self.m_iPrimaryAmmoType ) <= 0 ) then
-		-- HEV suit - indicate out of ammo condition
-		pPlayer:SetSuitUpdate( "!HEV_AMO0", 0, 0 );
-	end
+	pPlayer:ViewPunch( QAngle( 6, random.RandomFloat( -2, 2 ), 0 ) );
 end
 
 function SWEP:SecondaryAttack()
 end
 
 function SWEP:Reload()
-	local fRet = self:DefaultReload( self:GetMaxClip1(), self:GetMaxClip2(), 182 );
-	if ( fRet ) then
-		self:WeaponSound( 6 );
-		ToHL2MPPlayer(self:GetOwner()):DoAnimationEvent( 3 );
-	end
-	return fRet;
 end
 
 function SWEP:Think()

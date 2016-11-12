@@ -70,7 +70,6 @@ function SWEP:Precache()
 end
 
 function SWEP:PrimaryAttack()
-
 	if ( self.m_bInReload ) then
 		self.m_bDelayedFire1 = ( not self.m_bDelayedFire2 );
 		return;
@@ -141,7 +140,6 @@ end
 end
 
 function SWEP:SecondaryAttack()
-
 	if ( self.m_bInReload ) then
 		self.m_bDelayedFire2 = ( not self.m_bDelayedFire1 );
 		return;
@@ -218,6 +216,9 @@ end
 end
 
 function SWEP:StartReload()
+
+	print("StartReload")
+
 	local pPlayer = self:GetOwner();
 
 	if ( ToBaseEntity( pPlayer ) == NULL ) then
@@ -248,20 +249,16 @@ function SWEP:StartReload()
 
 	self:SendWeaponAnim( 267 );
 
-	-- Make shotgun shell visible
-	self:SetBodyGroup( 1, 0 );
-
-	self.m_flNextPrimaryAttack = gpGlobals.curtime() + self:GetViewModelSequenceDuration();
-	self.m_flNextSecondaryAttack = gpGlobals.curtime() + self:GetViewModelSequenceDuration();
+	self.m_flNextPrimaryAttack = gpGlobals.curtime() + self:SequenceDuration();
+	self.m_flNextSecondaryAttack = gpGlobals.curtime() + self:SequenceDuration();
 
 	self.m_bInReload = true;
 	return true;
 end
 
 function SWEP:Reload()
-	if ( not m_bInReload ) then
-		return;
-	end
+
+	print("Reload")
 
 	local pPlayer = self:GetOwner();
 
@@ -270,7 +267,7 @@ function SWEP:Reload()
 	end
 
 	if ( pPlayer:GetAmmoCount( self.m_iPrimaryAmmoType ) <= 0 ) then
-		return false
+		return false;
 	end
 
 	if ( self.m_iClip1 >= self.clip_size ) then
@@ -291,20 +288,25 @@ function SWEP:Reload()
 		return false;
 	end
 
+	if ( not m_bInReload ) then
+		self:StartReload();
+		return;
+	end
+
 	self:FillClip();
 
 	self:WeaponSound( 6 );
 	self:SendWeaponAnim( 183 );
 
-	self.m_flNextPrimaryAttack = gpGlobals.curtime() + self:GetViewModelSequenceDuration();
-	self.m_flNextSecondaryAttack = gpGlobals.curtime() + self:GetViewModelSequenceDuration();
+	self.m_flNextPrimaryAttack = gpGlobals.curtime() + self:SequenceDuration();
+	self.m_flNextSecondaryAttack = gpGlobals.curtime() + self:SequenceDuration();
 
 	return true;
 end
 
 function SWEP:FinishReload()
-	-- Make shotgun shell invisible
-	self:SetBodyGroup( 1, 1 );
+
+	print("FinishReload")
 
 	local pPlayer = self:GetOwner();
 
@@ -316,11 +318,18 @@ function SWEP:FinishReload()
 
 	self:SendWeaponAnim( 268 );
 
-	self.m_flNextPrimaryAttack = gpGlobals.curtime() + self:GetViewModelSequenceDuration();
-	self.m_flNextSecondaryAttack = gpGlobals.curtime() + self:GetViewModelSequenceDuration();
+	if ( self.m_bNeedPump ) then
+		self:Pump();
+	end
+	
+	self.m_flNextPrimaryAttack = gpGlobals.curtime() + self:SequenceDuration();
+	self.m_flNextSecondaryAttack = gpGlobals.curtime() + self:SequenceDuration();
 end
 
 function SWEP:FillClip()
+
+	print("FillClip")
+
 	local pPlayer = self:GetOwner();
 
 	if ( ToBaseEntity( pPlayer ) == NULL ) then
@@ -331,14 +340,21 @@ function SWEP:FillClip()
 		if ( self.m_iClip1 > self.clip_size ) then
 			self.m_iClip1 = self.m_iClip1 + 1;
 			pPlayer:RemoveAmmo( 1, self.m_iPrimaryAmmoType );
+			
+			if ( self.m_iClip1 >= self.clip_size ) then
+				self:FinishReload();
+			end
 		end
 	end
 end
 
 function SWEP:Pump()
+
+	print("Pump")
+
 	local pPlayer = self:GetOwner();
 
-	if ( ToBaseEntity( pPlayer ) == NULL ) thenGetViewModelSequenceDuration 
+	if ( ToBaseEntity( pPlayer ) == NULL ) then
 		return false;
 	end
 
@@ -347,8 +363,8 @@ function SWEP:Pump()
 	self:WeaponSound( 11 );
 	self:SendWeaponAnim( 269 );
 
-	self.m_flNextPrimaryAttack = gpGlobals.curtime() + self:GetViewModelSequenceDuration();
-	self.m_flNextSecondaryAttack = gpGlobals.curtime() + self:GetViewModelSequenceDuration();
+	self.m_flNextPrimaryAttack = gpGlobals.curtime() + self:SequenceDuration();
+	self.m_flNextSecondaryAttack = gpGlobals.curtime() + self:SequenceDuration();
 end
 
 function SWEP:Think()
