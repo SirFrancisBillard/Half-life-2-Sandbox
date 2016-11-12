@@ -25,7 +25,7 @@ SWEP.damage					= 12
 
 SWEP.SoundData				=
 {
-	empty					= "Weapon_Pistol.Empty",
+	empty					= "weapons/1alyxgun/alyxgun_empty.wav",
 	single_shot				= "weapons/1shotgun1/Shotgun_Fire1.wav",
 	double_shot				= "weapons/1shotgun1/Shotgun_secondaryfire_DoubleBlast.wav", -- KABLAM
 	reload					= "weapons/1shotgun1/Shotgun_Reload1.wav",
@@ -60,6 +60,7 @@ SWEP.m_acttable				=
 function SWEP:Initialize()
 	self.m_bReloadsSingly	= true;
 	self.m_bFiresUnderwater	= false;
+	self.m_bInReload		= false;
 	self.m_bNeedPump		= false;
 	self.m_bDelayedFire1	= false;
 	self.m_bDelayedFire2	= false;
@@ -69,6 +70,12 @@ function SWEP:Precache()
 end
 
 function SWEP:PrimaryAttack()
+
+	if ( self.m_bInReload ) then
+		self.m_bDelayedFire1 = ( not self.m_bDelayedFire2 );
+		return;
+	end
+
 	-- Only the player fires this way so we can cast
 	local pPlayer = self:GetOwner();
 
@@ -126,7 +133,7 @@ end
 		pPlayer:SetSuitUpdate( "!HEV_AMO0", 0, 0 );
 	end
 
-	if ( self.m_iClip1 == 0 ) then
+	if ( self.m_iClip1 > 0 ) then
 
 		self.m_bNeedPump = true;
 
@@ -134,6 +141,12 @@ end
 end
 
 function SWEP:SecondaryAttack()
+
+	if ( self.m_bInReload ) then
+		self.m_bDelayedFire2 = ( not self.m_bDelayedFire1 );
+		return;
+	end
+
 	-- Only the player fires this way so we can cast
 	local pPlayer = self:GetOwner();
 
@@ -197,20 +210,145 @@ end
 		pPlayer:SetSuitUpdate( "!HEV_AMO0", 0, 0 );
 	end
 
-	if ( self.m_iClip1 == 0 ) then
+	if ( self.m_iClip1 > 0 ) then
 
 		self.m_bNeedPump = true;
 
 	end
 end
 
-function SWEP:Reload()
-	local fRet = self:DefaultReload( self:GetMaxClip1(), self:GetMaxClip2(), 182 );
-	if ( fRet ) then
-		self:WeaponSound( 6 );
-		ToHL2MPPlayer(self:GetOwner()):DoAnimationEvent( 3 );
+function SWEP:StartReload()
+	local pPlayer = self:GetOwner();
+
+	if ( ToBaseEntity( pPlayer ) == NULL ) then
+		return false;
 	end
-	return fRet;
+
+	if ( pPlayer:GetAmmoCount( self.m_iPrimaryAmmoType ) <= 0 ) then
+		return false
+	end
+
+	if ( self.m_iClip1 >= self.clip_size ) then
+		return false;
+	end
+
+	if ( pPlayer:GetAmmoCount( self.m_iPrimaryAmmoType ) <= 0 ) then
+		return false
+	end
+
+	if ( self.m_iClip1 <= 0 ) then
+		self.m_bNeedPump = true;
+	end
+
+	local j = math.min( 1, pPlayer:GetAmmoCount( self.m_iPrimaryAmmoType ) )
+
+	if ( j <= 0 ) then
+		return false;
+	end
+
+	self:SendWeaponAnim( 267 );
+
+	-- Make shotgun shell visible
+	self:SetBodyGroup( 1, 0 );
+
+	self.m_flNextPrimaryAttack = gpGlobals.curtime() + self:GetViewModelSequenceDuration();
+	self.m_flNextSecondaryAttack = gpGlobals.curtime() + self:GetViewModelSequenceDuration();
+
+	self.m_bInReload = true;
+	return true;
+end
+
+function SWEP:Reload()
+	if ( not m_bInReload ) then
+		return;
+	end
+
+	local pPlayer = self:GetOwner();
+
+	if ( ToBaseEntity( pPlayer ) == NULL ) then
+		return false;
+	end
+
+	if ( pPlayer:GetAmmoCount( self.m_iPrimaryAmmoType ) <= 0 ) then
+		return false
+	end
+
+	if ( self.m_iClip1 >= self.clip_size ) then
+		return false;
+	end
+
+	if ( pPlayer:GetAmmoCount( self.m_iPrimaryAmmoType ) <= 0 ) then
+		return false
+	end
+
+	if ( self.m_iClip1 <= 0 ) then
+		self.m_bNeedPump = true;
+	end
+
+	local j = math.min( 1, pPlayer:GetAmmoCount( self.m_iPrimaryAmmoType ) )
+
+	if ( j <= 0 ) then
+		return false;
+	end
+
+	self:FillClip();
+
+	self:WeaponSound( 6 );
+	self:SendWeaponAnim( 183 );
+
+	self.m_flNextPrimaryAttack = gpGlobals.curtime() + self:GetViewModelSequenceDuration();
+	self.m_flNextSecondaryAttack = gpGlobals.curtime() + self:GetViewModelSequenceDuration();
+
+	return true;
+end
+
+function SWEP:FinishReload()
+	-- Make shotgun shell invisible
+	self:SetBodyGroup( 1, 1 );
+
+	local pPlayer = self:GetOwner();
+
+	if ( ToBaseEntity( pPlayer ) == NULL ) then
+		return false;
+	end
+
+	self.m_bInReload = false;
+
+	self:SendWeaponAnim( 268 );
+
+	self.m_flNextPrimaryAttack = gpGlobals.curtime() + self:GetViewModelSequenceDuration();
+	self.m_flNextSecondaryAttack = gpGlobals.curtime() + self:GetViewModelSequenceDuration();
+end
+
+function SWEP:FillClip()
+	local pPlayer = self:GetOwner();
+
+	if ( ToBaseEntity( pPlayer ) == NULL ) then
+		return false;
+	end
+
+	if ( pPlayer:GetAmmoCount( self.m_iPrimaryAmmoType ) > 0 ) then
+		if ( self.m_iClip1 > self.clip_size ) then
+			self.m_iClip1 = self.m_iClip1 + 1;
+			pPlayer:RemoveAmmo( 1, self.m_iPrimaryAmmoType );
+		end
+	end
+end
+
+function SWEP:Pump()
+	local pPlayer = self:GetOwner();
+
+	if ( ToBaseEntity( pPlayer ) == NULL ) thenGetViewModelSequenceDuration 
+		return false;
+	end
+
+	self.m_bNeedPump = false;
+
+	self:WeaponSound( 11 );
+	self:SendWeaponAnim( 269 );
+
+	self.m_flNextPrimaryAttack = gpGlobals.curtime() + self:GetViewModelSequenceDuration();
+	self.m_flNextSecondaryAttack = gpGlobals.curtime() + self:GetViewModelSequenceDuration();
 end
 
 function SWEP:Think()

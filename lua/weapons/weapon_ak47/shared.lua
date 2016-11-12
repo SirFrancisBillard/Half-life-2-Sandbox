@@ -25,9 +25,9 @@ SWEP.damage					= 25
 
 SWEP.SoundData				=
 {
-	empty					= "Weapon_Pistol.Empty",
+	empty					= "weapons/1alyxgun/alyxgun_empty.wav",
 	single_shot				= "weapons/1oicw/ar2_fire1.wav",
-	reload					= "weapons/1smg2/switch_single.wav"
+	reload					= "weapons/1ar1/ar1_reload.wav"
 }
 
 SWEP.showusagehint			= 0
